@@ -576,8 +576,12 @@
         const ctx    = canvas.getContext('2d');
 
         function resizeCanvas() {
-            canvas.width  = window.innerWidth  - OFFSET_X;
-            canvas.height = window.innerHeight - OFFSET_Y;
+            const dpr  = window.devicePixelRatio || 1;
+            const cssW = window.innerWidth  - OFFSET_X;
+            const cssH = window.innerHeight - OFFSET_Y;
+            canvas.width  = Math.round(cssW * dpr);
+            canvas.height = Math.round(cssH * dpr);
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
             render();
         }
 
