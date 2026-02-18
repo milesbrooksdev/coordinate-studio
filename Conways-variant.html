@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COORDINATE | Digital Architecture</title>
+    <style>
+        :root {
+            --bg-color: #f0f0f0;
+            --grid-line: #dcdcdc;
+            --ink-color: #000000;
+            --white: #ffffff;
+            --cell-size: 20px;
+            --ruler-bg: #e8e8e8;
+            --highlight: #ffee00;
+            --font-main: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            --font-mono: 'Courier New', Courier, monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            cursor: crosshair;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            font-family: var(--font-main);
+            color: var(--ink-color);
+            overflow-x: hidden;
+            width: 100vw;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ─── Grid background ─────────────────────────────────────── */
+        .grid-layer {
+            position: fixed;
+            top: 20px;
+            left: 30px;
+            width: calc(100% - 30px);
+            height: calc(100% - 20px);
+            background-image:
+                linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+                linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+            background-size: var(--cell-size) var(--cell-size);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* ─── Rulers ──────────────────────────────────────────────── */
+        .ruler-x {
+            position: fixed;
+            top: 0;
+            left: 30px;
+            right: 0;
+            height: 20px;
+            background: var(--ruler-bg);
+            border-bottom: 1px solid var(--ink-color);
+            display: flex;
+            overflow: hidden;
+            z-index: 100;
+            font-family: var(--font-mono);
+            font-size: 10px;
+            line-height: 20px;
+            color: #666;
+            user-select: none;
+        }
+
+        .ruler-x span {
+            display: inline-block;
+            width: var(--cell-size);
+            text-align: center;
+            border-right: 1px solid #ccc;
+            flex-shrink: 0;
+        }
+
+        .ruler-y {
+            position: fixed;
+            top: 20px;
+            left: 0;
+            bottom: 0;
+            width: 30px;
+            background: var(--ruler-bg);
+            border-right: 1px solid var(--ink-color);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 100;
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: #666;
+            user-select: none;
+        }
+
+        .ruler-y span {
+            display: block;
+            height: var(--cell-size);
+            line-height: var(--cell-size);
+            text-align: center;
+            border-bottom: 1px solid #ccc;
+            flex-shrink: 0;
+        }
+
+        .corner-piece {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 30px;
+            height: 20px;
+            background: var(--ink-color);
+            z-index: 101;
+        }
+
+        /* ─── Game of Life canvas ─────────────────────────────────── */
+        #golCanvas {
+            position: fixed;
+            top: 20px;
+            left: 30px;
+            width: calc(100% - 30px);
+            height: calc(100% - 20px);
+            z-index: 2;
+            pointer-events: none; /* clicks pass through to document handler */
+        }
+
+        /* ─── Main content ────────────────────────────────────────── */
+        .main-stage {
+            position: relative;
+            margin-top: 20px;
+            margin-left: 30px;
+            width: calc(100% - 30px);
+            min-height: 100vh;
+            z-index: 10;
+            padding: calc(var(--cell-size) * 2);
+        }
+
+        .content-card {
+            background: var(--white);
+            border: 1px solid var(--grid-line);
+            padding: calc(var(--cell-size));
+            position: relative;
+            margin-bottom: calc(var(--cell-size) * 3);
+            box-shadow: 10px 10px 0px rgba(0,0,0,0.05);
+        }
+
+        .content-card::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                linear-gradient(to right, rgba(0,0,0,0.03) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(0,0,0,0.03) 1px, transparent 1px);
+            background-size: var(--cell-size) var(--cell-size);
+            pointer-events: none;
+        }
+
+        /* ─── Typography ──────────────────────────────────────────── */
+        h1 {
+            font-size: 14px;
+            line-height: var(--cell-size);
+            margin: 0 0 var(--cell-size) 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 700;
+        }
+
+        h2 {
+            font-size: 32px;
+            line-height: calc(var(--cell-size) * 2);
+            margin: 0 0 var(--cell-size) 0;
+            font-weight: 400;
+            letter-spacing: -0.5px;
+            max-width: 800px;
+        }
+
+        p {
+            font-size: 14px;
+            line-height: var(--cell-size);
+            margin: 0 0 var(--cell-size) 0;
+            max-width: 45ch;
+        }
+
+        .meta-data {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: #666;
+            margin-bottom: var(--cell-size);
+            display: block;
+        }
+
+        /* ─── Nav ─────────────────────────────────────────────────── */
+        nav {
+            position: fixed;
+            top: 40px;
+            right: 40px;
+            background: var(--white);
+            border: 1px solid var(--ink-color);
+            display: flex;
+            flex-direction: column;
+            z-index: 999;
+        }
+
+        .nav-item {
+            display: block;
+            height: var(--cell-size);
+            line-height: var(--cell-size);
+            padding: 0 10px;
+            border-bottom: 1px solid var(--grid-line);
+            font-size: 12px;
+            text-transform: uppercase;
+            text-decoration: none;
+            color: var(--ink-color);
+            transition: all 0.1s;
+        }
+
+        .nav-item:last-child {
+            border-bottom: none;
+        }
+
+        .nav-item:hover {
+            background: var(--ink-color);
+            color: var(--white);
+        }
+
+        /* Play/Pause button — same dimensions as nav items */
+        #playPauseBtn {
+            display: block;
+            height: var(--cell-size);
+            line-height: var(--cell-size);
+            padding: 0 10px;
+            border-bottom: 1px solid var(--grid-line);
+            border-top: 1px solid var(--ink-color);
+            font-size: 12px;
+            font-family: var(--font-mono);
+            text-transform: uppercase;
+            text-decoration: none;
+            color: var(--ink-color);
+            background: var(--highlight);
+            cursor: crosshair;
+            transition: all 0.1s;
+            white-space: nowrap;
+            border-left: none;
+            border-right: none;
+            width: 100%;
+            text-align: left;
+        }
+
+        #playPauseBtn:hover {
+            background: var(--ink-color);
+            color: var(--highlight);
+        }
+
+        #playPauseBtn.running {
+            background: var(--ink-color);
+            color: var(--highlight);
+        }
+
+        #playPauseBtn.running:hover {
+            background: #333;
+            color: var(--highlight);
+        }
+
+        /* Step / Clear — smaller utility buttons below play */
+        .gol-sub-btn {
+            display: block;
+            height: var(--cell-size);
+            line-height: var(--cell-size);
+            padding: 0 10px;
+            border-bottom: 1px solid var(--grid-line);
+            font-size: 10px;
+            font-family: var(--font-mono);
+            text-transform: uppercase;
+            text-decoration: none;
+            color: #666;
+            background: #f5f5f5;
+            cursor: crosshair;
+            transition: all 0.1s;
+            width: 100%;
+            text-align: left;
+        }
+
+        .gol-sub-btn:last-child {
+            border-bottom: none;
+        }
+
+        .gol-sub-btn:hover {
+            background: var(--ink-color);
+            color: var(--white);
+        }
+
+        /* Generation counter */
+        #genCounter {
+            display: block;
+            height: var(--cell-size);
+            line-height: var(--cell-size);
+            padding: 0 10px;
+            border-bottom: 1px solid var(--grid-line);
+            font-size: 10px;
+            font-family: var(--font-mono);
+            color: #999;
+            background: #fafafa;
+            white-space: nowrap;
+            user-select: none;
+        }
+
+        /* ─── Project table ───────────────────────────────────────── */
+        .project-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            border-top: 1px solid var(--ink-color);
+            margin-top: var(--cell-size);
+        }
+
+        .project-row {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: 3fr 1fr 2fr;
+            border-bottom: 1px solid var(--grid-line);
+            transition: background 0.1s;
+        }
+
+        .project-row:hover { background: #f7f7f7; }
+
+        .p-cell {
+            padding: 10px;
+            font-size: 13px;
+            border-right: 1px solid var(--grid-line);
+            display: flex;
+            align-items: center;
+        }
+
+        .p-cell:last-child { border-right: none; }
+
+        .p-header {
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 11px;
+            background: #eee;
+        }
+
+        /* ─── Cursor & coord HUD ──────────────────────────────────── */
+        .active-cell-indicator {
+            position: fixed;
+            width: var(--cell-size);
+            height: var(--cell-size);
+            border: 1px solid var(--ink-color);
+            background: rgba(0,0,0,0.1);
+            pointer-events: none;
+            z-index: 50;
+            display: none;
+        }
+
+        .coordinates-display {
+            position: fixed;
+            bottom: 0;
+            right: 0;
+            background: var(--ink-color);
+            color: var(--white);
+            font-family: var(--font-mono);
+            font-size: 12px;
+            padding: 5px 10px;
+            z-index: 200;
+        }
+
+        /* ─── Utilities ───────────────────────────────────────────── */
+        .u-mt-2 { margin-top: calc(var(--cell-size) * 2); }
+        .u-mb-2 { margin-bottom: calc(var(--cell-size) * 2); }
+        .u-mono { font-family: var(--font-mono); }
+
+        .pixel-logo {
+            display: grid;
+            grid-template-columns: repeat(5, 10px);
+            grid-template-rows: repeat(5, 10px);
+            gap: 0;
+            margin-bottom: var(--cell-size);
+        }
+        .px  { background: var(--ink-color); width: 10px; height: 10px; }
+        .px-o { background: transparent; }
+    </style>
+</head>
+<body>
+
+    <!-- ── Chrome ─────────────────────────────────────────────────── -->
+    <div class="corner-piece"></div>
+    <div class="ruler-x" id="rulerX"></div>
+    <div class="ruler-y" id="rulerY"></div>
+    <div class="grid-layer"></div>
+    <div class="active-cell-indicator" id="cursorBox"></div>
+    <div class="coordinates-display" id="coordDisplay">X: 0 | Y: 0</div>
+
+    <!-- ── Game of Life canvas (behind content, above grid lines) ─── -->
+    <canvas id="golCanvas"></canvas>
+
+    <!-- ── Nav ───────────────────────────────────────────────────── -->
+    <nav id="mainNav">
+        <a href="#" class="nav-item">Index [A]</a>
+        <a href="#" class="nav-item">Projects [B]</a>
+        <a href="#" class="nav-item">Agency [C]</a>
+        <a href="#" class="nav-item">Contact [D]</a>
+        <!-- Conway controls -->
+        <button id="playPauseBtn" title="Play / Pause Conway's Game of Life">▶ RUN [GOL]</button>
+        <button class="gol-sub-btn" id="stepBtn"    title="Advance one generation">→ STEP</button>
+        <button class="gol-sub-btn" id="clearBtn"   title="Clear all cells">✕ CLEAR</button>
+        <button class="gol-sub-btn" id="resetBtn"   title="Re-seed with pixel art">↺ RESEED</button>
+        <span id="genCounter">GEN: 0 | CELLS: 0</span>
+    </nav>
+
+    <!-- ── Main content ──────────────────────────────────────────── -->
+    <div class="main-stage">
+
+        <div class="content-card" style="max-width:600px; margin-left:calc(var(--cell-size)*4); margin-top:calc(var(--cell-size)*4);">
+            <div class="pixel-logo">
+                <div class="px"></div><div class="px"></div><div class="px"></div><div class="px"></div><div class="px"></div>
+                <div class="px"></div><div class="px-o"></div><div class="px-o"></div><div class="px-o"></div><div class="px-o"></div>
+                <div class="px"></div><div class="px-o"></div><div class="px-o"></div><div class="px-o"></div><div class="px-o"></div>
+                <div class="px"></div><div class="px-o"></div><div class="px-o"></div><div class="px-o"></div><div class="px-o"></div>
+                <div class="px"></div><div class="px"></div><div class="px"></div><div class="px"></div><div class="px"></div>
+            </div>
+            <span class="meta-data">SYS.OP.2024 // V.1.0.4</span>
+            <h1>Coordinate Studio</h1>
+            <h2>We construct digital environments with rigorous precision and structural integrity.</h2>
+            <br>
+            <div style="display:flex; gap:20px;">
+                <div>
+                    <span class="meta-data">LOCATION</span>
+                    <p>New York, NY<br>10013</p>
+                </div>
+                <div>
+                    <span class="meta-data">STATUS</span>
+                    <p>Accepting New<br>Commissions</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-card" style="margin-left:calc(var(--cell-size)*12); width:calc(100% - var(--cell-size)*16);">
+            <h1>Selected Architecture</h1>
+            <div class="project-grid">
+                <div class="project-row">
+                    <div class="p-cell p-header">Client Name</div>
+                    <div class="p-cell p-header">Year</div>
+                    <div class="p-cell p-header">Sector</div>
+                </div>
+                <div class="project-row">
+                    <div class="p-cell">Apex Financial Terminal</div>
+                    <div class="p-cell u-mono">2023</div>
+                    <div class="p-cell">Fintech</div>
+                </div>
+                <div class="project-row">
+                    <div class="p-cell">Mono-Space Gallery</div>
+                    <div class="p-cell u-mono">2023</div>
+                    <div class="p-cell">Culture</div>
+                </div>
+                <div class="project-row">
+                    <div class="p-cell">Structure &amp; Void</div>
+                    <div class="p-cell u-mono">2022</div>
+                    <div class="p-cell">Architecture</div>
+                </div>
+                <div class="project-row">
+                    <div class="p-cell">Grid Systems Intl.</div>
+                    <div class="p-cell u-mono">2022</div>
+                    <div class="p-cell">E-Commerce</div>
+                </div>
+                <div class="project-row">
+                    <div class="p-cell">Null_Pointer Exception</div>
+                    <div class="p-cell u-mono">2021</div>
+                    <div class="p-cell">Experimental</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-card" style="max-width:400px; margin-left:calc(var(--cell-size)*2);">
+            <h1>Methodology</h1>
+            <p>Our work is not decorated. It is engineered. We believe the web is a grid, not a canvas. By exposing the underlying logic of the browser, we create interfaces that feel honest, raw, and utilitarian.</p>
+            <br>
+            <p class="u-mono">-&gt; READ FULL PROTOCOL</p>
+        </div>
+
+    </div><!-- /.main-stage -->
+
+    <script>
+    (() => {
+        /* ── Constants ───────────────────────────────────────────── */
+        const CELL  = 20;           // px per grid cell
+        const OFFSET_X = 30;        // ruler-y width
+        const OFFSET_Y = 20;        // ruler-x height
+        const GOL_INTERVAL = 120;   // ms between generations
+
+        /* ── Rulers ──────────────────────────────────────────────── */
+        const rulerX      = document.getElementById('rulerX');
+        const rulerY      = document.getElementById('rulerY');
+        const cursorBox   = document.getElementById('cursorBox');
+        const coordDisplay= document.getElementById('coordDisplay');
+
+        function getColumnLabel(index) {
+            let label = '';
+            index++;
+            while (index > 0) {
+                const rem = (index - 1) % 26;
+                label = String.fromCharCode(65 + rem) + label;
+                index = Math.floor((index - 1) / 26);
+            }
+            return label;
+        }
+
+        function generateRulers() {
+            const cols = Math.ceil(window.innerWidth  / CELL);
+            const rows = Math.ceil(window.innerHeight / CELL);
+
+            rulerX.innerHTML = '';
+            for (let i = 0; i < cols; i++) {
+                const s = document.createElement('span');
+                s.textContent = getColumnLabel(i);
+                rulerX.appendChild(s);
+            }
+
+            rulerY.innerHTML = '';
+            for (let i = 0; i < rows; i++) {
+                const s = document.createElement('span');
+                s.textContent = i + 1;
+                rulerY.appendChild(s);
+            }
+        }
+
+        /* ── Canvas setup ────────────────────────────────────────── */
+        const canvas = document.getElementById('golCanvas');
+        const ctx    = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width  = window.innerWidth  - OFFSET_X;
+            canvas.height = window.innerHeight - OFFSET_Y;
+            render();
+        }
+
+        /* ── Cell state ──────────────────────────────────────────── */
+        // Live cells stored as "x,y" strings (grid coordinates)
+        const cells = new Set();
+
+        function cellKey(x, y)   { return `${x},${y}`; }
+        function parseKey(key)   { const [x, y] = key.split(','); return [+x, +y]; }
+
+        /* ── Seed with pixel-art strokes ─────────────────────────── */
+        function seedPixelArt() {
+            cells.clear();
+            const STROKES = 8;
+            const cols = Math.floor((window.innerWidth  - OFFSET_X) / CELL);
+            const rows = Math.floor((window.innerHeight - OFFSET_Y) / CELL);
+
+            for (let s = 0; s < STROKES; s++) {
+                let sx = Math.floor(Math.random() * cols);
+                let sy = Math.floor(Math.random() * rows);
+                const len = 20 + Math.floor(Math.random() * 50);
+                const dx  = Math.random() > 0.5 ? 1 : -1;
+                const dy  = Math.random() > 0.5 ? 1 : 0;
+
+                for (let i = 0; i < len; i++) {
+                    const thick = Math.floor(Math.random() * 3) + 1;
+                    for (let t = 0; t < thick; t++) {
+                        const cx = sx + i * dx;
+                        const cy = sy + i * dy + t;
+                        if (cx >= 0 && cy >= 0 && cx < cols && cy < rows) {
+                            if (Math.random() > 0.2) {
+                                cells.add(cellKey(cx, cy));
+                            }
+                        }
+                    }
+                }
+            }
+            generation = 0;
+            updateCounter();
+            render();
+        }
+
+        /* ── Render ──────────────────────────────────────────────── */
+        function render() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#000000';
+            for (const key of cells) {
+                const [x, y] = parseKey(key);
+                ctx.fillRect(x * CELL, y * CELL, CELL, CELL);
+            }
+        }
+
+        /* ── Conway's step ───────────────────────────────────────── */
+        let generation = 0;
+
+        function step() {
+            const neighborCount = new Map();
+
+            for (const key of cells) {
+                const [x, y] = parseKey(key);
+                for (let dx = -1; dx <= 1; dx++) {
+                    for (let dy = -1; dy <= 1; dy++) {
+                        if (dx === 0 && dy === 0) continue;
+                        const nk = cellKey(x + dx, y + dy);
+                        neighborCount.set(nk, (neighborCount.get(nk) || 0) + 1);
+                    }
+                }
+            }
+
+            const next = new Set();
+            for (const [key, count] of neighborCount) {
+                if (count === 3 || (count === 2 && cells.has(key))) {
+                    next.add(key);
+                }
+            }
+
+            cells.clear();
+            for (const k of next) cells.add(k);
+
+            generation++;
+            updateCounter();
+            render();
+        }
+
+        /* ── Play / Pause ────────────────────────────────────────── */
+        let running    = false;
+        let intervalId = null;
+        const playBtn  = document.getElementById('playPauseBtn');
+
+        function startGOL() {
+            if (running) return;
+            running    = true;
+            intervalId = setInterval(step, GOL_INTERVAL);
+            playBtn.textContent = '■ PAUSE [GOL]';
+            playBtn.classList.add('running');
+        }
+
+        function stopGOL() {
+            if (!running) return;
+            running = false;
+            clearInterval(intervalId);
+            intervalId = null;
+            playBtn.textContent = '▶ RUN [GOL]';
+            playBtn.classList.remove('running');
+        }
+
+        playBtn.addEventListener('click', () => {
+            running ? stopGOL() : startGOL();
+        });
+
+        document.getElementById('stepBtn').addEventListener('click', () => {
+            stopGOL();
+            step();
+        });
+
+        document.getElementById('clearBtn').addEventListener('click', () => {
+            stopGOL();
+            cells.clear();
+            generation = 0;
+            updateCounter();
+            render();
+        });
+
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            stopGOL();
+            seedPixelArt();
+        });
+
+        /* ── Generation counter ──────────────────────────────────── */
+        const genCounter = document.getElementById('genCounter');
+        function updateCounter() {
+            genCounter.textContent = `GEN: ${generation} | CELLS: ${cells.size}`;
+        }
+
+        /* ── Click-to-toggle cells ───────────────────────────────── */
+        // The canvas has pointer-events:none, so clicks reach the document.
+        // We skip clicks that land on nav or content-card elements.
+        document.addEventListener('click', (e) => {
+            // Ignore clicks inside nav or content cards
+            if (e.target.closest('nav, .content-card')) return;
+
+            const gx = Math.floor((e.clientX - OFFSET_X) / CELL);
+            const gy = Math.floor((e.clientY - OFFSET_Y) / CELL);
+            if (gx < 0 || gy < 0) return;
+
+            const key = cellKey(gx, gy);
+            if (cells.has(key)) {
+                cells.delete(key);
+            } else {
+                cells.add(key);
+            }
+            updateCounter();
+            render();
+        });
+
+        /* ── Mouse drag to paint cells ───────────────────────────── */
+        let isPainting   = false;
+        let paintMode    = null; // 'add' | 'remove'
+        let lastPainted  = null;
+
+        document.addEventListener('mousedown', (e) => {
+            if (e.target.closest('nav, .content-card')) return;
+            if (e.button !== 0) return;
+            isPainting = true;
+
+            const gx  = Math.floor((e.clientX - OFFSET_X) / CELL);
+            const gy  = Math.floor((e.clientY - OFFSET_Y) / CELL);
+            if (gx < 0 || gy < 0) return;
+
+            const key = cellKey(gx, gy);
+            paintMode   = cells.has(key) ? 'remove' : 'add';
+            lastPainted = key;
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            /* ── cursor HUD ── */
+            const gx = Math.floor((e.clientX - OFFSET_X) / CELL);
+            const gy = Math.floor((e.clientY - OFFSET_Y) / CELL);
+            const vx = gx * CELL + OFFSET_X;
+            const vy = gy * CELL + OFFSET_Y;
+
+            if (e.clientX > OFFSET_X && e.clientY > OFFSET_Y) {
+                cursorBox.style.display    = 'block';
+                cursorBox.style.transform  = `translate(${vx}px, ${vy}px)`;
+                coordDisplay.textContent   = `X: ${getColumnLabel(gx)} | Y: ${gy + 1}`;
+            } else {
+                cursorBox.style.display = 'none';
+            }
+
+            /* ── paint ── */
+            if (!isPainting) return;
+            if (e.target.closest('nav, .content-card')) return;
+            if (gx < 0 || gy < 0) return;
+
+            const key = cellKey(gx, gy);
+            if (key === lastPainted) return;
+            lastPainted = key;
+
+            if (paintMode === 'add')    cells.add(key);
+            else                        cells.delete(key);
+
+            updateCounter();
+            render();
+        });
+
+        document.addEventListener('mouseup', () => { isPainting = false; });
+
+        /* ── Init ────────────────────────────────────────────────── */
+        window.addEventListener('resize', () => {
+            generateRulers();
+            resizeCanvas();
+        });
+
+        generateRulers();
+        resizeCanvas();   // also calls render() on empty grid
+        seedPixelArt();   // paint initial pixel art
+    })();
+    </script>
+
+</body>
+</html>

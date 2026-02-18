@@ -1,0 +1,424 @@
+<html lang="en" vid="0"><head vid="1">
+    <meta charset="UTF-8" vid="2">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" vid="3">
+    <title vid="4">COORDINATE | CONTACT [D]</title>
+    <style vid="5">
+        :root {
+            --bg-color: #f0f0f0;
+            --grid-line: #dcdcdc;
+            --ink-color: #000000;
+            --white: #ffffff;
+            --cell-size: 20px;
+            --ruler-bg: #e8e8e8;
+            --highlight: #ffee00;
+            --font-main: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            --font-mono: 'Courier New', Courier, monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            cursor: crosshair;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            font-family: var(--font-main);
+            color: var(--ink-color);
+            overflow-x: hidden;
+            width: 100vw;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .grid-layer {
+            position: fixed;
+            top: 20px; 
+            left: 30px; 
+            width: calc(100% - 30px);
+            height: calc(100% - 20px);
+            background-image: 
+                linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+                linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+            background-size: var(--cell-size) var(--cell-size);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .ruler-x {
+            position: fixed;
+            top: 0;
+            left: 30px;
+            right: 0;
+            height: 20px;
+            background: var(--ruler-bg);
+            border-bottom: 1px solid var(--ink-color);
+            display: flex;
+            overflow: hidden;
+            z-index: 100;
+            font-family: var(--font-mono);
+            font-size: 10px;
+            line-height: 20px;
+            color: #666;
+            user-select: none;
+        }
+        
+        .ruler-x span {
+            display: inline-block;
+            width: var(--cell-size);
+            text-align: center;
+            border-right: 1px solid #ccc;
+            flex-shrink: 0;
+        }
+
+        .ruler-y {
+            position: fixed;
+            top: 20px;
+            left: 0;
+            bottom: 0;
+            width: 30px;
+            background: var(--ruler-bg);
+            border-right: 1px solid var(--ink-color);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 100;
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: #666;
+            user-select: none;
+        }
+
+        .ruler-y span {
+            display: block;
+            height: var(--cell-size);
+            line-height: var(--cell-size);
+            text-align: center;
+            border-bottom: 1px solid #ccc;
+            flex-shrink: 0;
+        }
+
+        .corner-piece {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 30px;
+            height: 20px;
+            background: var(--ink-color);
+            z-index: 101;
+        }
+
+        .main-stage {
+            position: relative;
+            margin-top: 20px;
+            margin-left: 30px;
+            width: calc(100% - 30px);
+            min-height: 100vh;
+            z-index: 10;
+            padding: calc(var(--cell-size) * 2);
+        }
+
+        .content-card {
+            background: var(--white);
+            border: 1px solid var(--grid-line);
+            padding: calc(var(--cell-size));
+            position: relative;
+            margin-bottom: calc(var(--cell-size) * 3);
+            box-shadow: 10px 10px 0px rgba(0,0,0,0.05);
+        }
+
+        .content-card::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(to right, rgba(0,0,0,0.03) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(0,0,0,0.03) 1px, transparent 1px);
+            background-size: var(--cell-size) var(--cell-size);
+            pointer-events: none;
+        }
+
+        h1 {
+            font-size: 14px;
+            line-height: var(--cell-size);
+            margin: 0 0 var(--cell-size) 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 700;
+        }
+
+        .meta-data {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: #666;
+            margin-bottom: var(--cell-size);
+            display: block;
+        }
+
+        nav {
+            position: fixed;
+            top: 40px;
+            right: 40px;
+            background: var(--white);
+            border: 1px solid var(--ink-color);
+            display: flex;
+            flex-direction: column;
+            z-index: 999;
+        }
+
+        .nav-item {
+            display: block;
+            height: var(--cell-size);
+            line-height: var(--cell-size);
+            padding: 0 10px;
+            border-bottom: 1px solid var(--grid-line);
+            font-size: 12px;
+            text-transform: uppercase;
+            text-decoration: none;
+            color: var(--ink-color);
+        }
+
+        .nav-item:hover {
+            background: var(--ink-color);
+            color: var(--white);
+        }
+
+        .nav-item.active {
+            background: var(--ink-color);
+            color: var(--white);
+        }
+
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            border-top: 1px solid var(--ink-color);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 150px 1fr;
+            border-bottom: 1px solid var(--grid-line);
+        }
+
+        .form-label {
+            padding: 10px;
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+            background: #eee;
+            border-right: 1px solid var(--grid-line);
+            display: flex;
+            align-items: center;
+        }
+
+        .form-input-cell {
+            padding: 0;
+        }
+
+        input, textarea {
+            width: 100%;
+            height: 100%;
+            border: none;
+            padding: 10px;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            background: transparent;
+            outline: none;
+        }
+
+        textarea {
+            min-height: calc(var(--cell-size) * 6);
+            resize: vertical;
+        }
+
+        .submit-btn {
+            background: var(--ink-color);
+            color: var(--white);
+            border: none;
+            padding: 10px 20px;
+            font-family: var(--font-mono);
+            text-transform: uppercase;
+            font-size: 12px;
+            margin-top: var(--cell-size);
+            cursor: pointer;
+        }
+
+        
+        .pixel-map {
+            display: grid;
+            grid-template-columns: repeat(20, 10px);
+            grid-template-rows: repeat(15, 10px);
+            background: #e0e0e0;
+            width: fit-content;
+            border: 1px solid var(--ink-color);
+        }
+
+        .mp-x { background: var(--ink-color); }
+        .mp-o { background: transparent; }
+        .mp-p { background: red; } 
+
+        .coordinates-display {
+            position: fixed;
+            bottom: 0;
+            right: 0;
+            background: var(--ink-color);
+            color: var(--white);
+            font-family: var(--font-mono);
+            font-size: 12px;
+            padding: 5px 10px;
+            z-index: 200;
+        }
+
+        .active-cell-indicator {
+            position: fixed;
+            width: var(--cell-size);
+            height: var(--cell-size);
+            border: 1px solid var(--ink-color);
+            background: rgba(0,0,0,0.1);
+            pointer-events: none;
+            z-index: 50;
+            display: none;
+        }
+    </style>
+</head>
+<body vid="6">
+
+    <div class="corner-piece" vid="7"></div>
+    <div class="ruler-x" id="rulerX" vid="8"></div>
+    <div class="ruler-y" id="rulerY" vid="9"></div>
+    <div class="grid-layer" vid="10"></div>
+    <div class="active-cell-indicator" id="cursorBox" vid="11"></div>
+    <div class="coordinates-display" id="coordDisplay" vid="12">X: 0 | Y: 0</div>
+
+    <nav vid="13">
+        <a href="#" class="nav-item" vid="14">Index [A]</a>
+        <a href="#" class="nav-item" vid="15">Projects [B]</a>
+        <a href="#" class="nav-item" vid="16">Agency [C]</a>
+        <a href="#" class="nav-item active" vid="17">Contact [D]</a>
+    </nav>
+
+    <div class="main-stage" vid="18">
+        
+        <div style="display: flex; gap: calc(var(--cell-size) * 2); align-items: flex-start;" vid="19">
+            
+            <div class="content-card" style="flex: 1; max-width: 600px;" vid="20">
+                <span class="meta-data" vid="21">COMMUNICATION PROTOCOL // 004</span>
+                <h1 vid="22">Inquiry Terminal</h1>
+                
+                <div class="form-grid" vid="23">
+                    <div class="form-row" vid="24">
+                        <div class="form-label" vid="25">ID_NAME</div>
+                        <div class="form-input-cell" vid="26"><input type="text" placeholder="GUEST_USER_01" vid="27"></div>
+                    </div>
+                    <div class="form-row" vid="28">
+                        <div class="form-label" vid="29">IP_EMAIL</div>
+                        <div class="form-input-cell" vid="30"><input type="email" placeholder="USER@DOMAIN.COM" vid="31"></div>
+                    </div>
+                    <div class="form-row" vid="32">
+                        <div class="form-label" vid="33">TRANSMISSION</div>
+                        <div class="form-input-cell" vid="34"><textarea placeholder="DESCRIBE THE PARAMETERS OF YOUR PROJECT..." vid="35"></textarea></div>
+                    </div>
+                </div>
+                <button class="submit-btn" vid="36">Execute Send [Enter]</button>
+            </div>
+
+            <div class="content-card" style="width: 320px;" vid="37">
+                <span class="meta-data" vid="38">GEOGRAPHICAL DATA</span>
+                <h1 vid="39">Physical Node</h1>
+                
+                <div class="pixel-map" vid="40">
+                    
+                    <div class="mp-o" vid="41"></div><div class="mp-o" vid="42"></div><div class="mp-o" vid="43"></div><div class="mp-o" vid="44"></div><div class="mp-o" vid="45"></div><div class="mp-o" vid="46"></div><div class="mp-o" vid="47"></div><div class="mp-o" vid="48"></div><div class="mp-o" vid="49"></div><div class="mp-o" vid="50"></div><div class="mp-o" vid="51"></div><div class="mp-o" vid="52"></div><div class="mp-o" vid="53"></div><div class="mp-o" vid="54"></div><div class="mp-o" vid="55"></div><div class="mp-o" vid="56"></div><div class="mp-o" vid="57"></div><div class="mp-o" vid="58"></div><div class="mp-o" vid="59"></div><div class="mp-o" vid="60"></div>
+                    <div class="mp-o" vid="61"></div><div class="mp-o" vid="62"></div><div class="mp-o" vid="63"></div><div class="mp-o" vid="64"></div><div class="mp-o" vid="65"></div><div class="mp-o" vid="66"></div><div class="mp-o" vid="67"></div><div class="mp-o" vid="68"></div><div class="mp-o" vid="69"></div><div class="mp-o" vid="70"></div><div class="mp-o" vid="71"></div><div class="mp-o" vid="72"></div><div class="mp-o" vid="73"></div><div class="mp-o" vid="74"></div><div class="mp-o" vid="75"></div><div class="mp-o" vid="76"></div><div class="mp-o" vid="77"></div><div class="mp-o" vid="78"></div><div class="mp-o" vid="79"></div><div class="mp-o" vid="80"></div>
+                    <div class="mp-o" vid="81"></div><div class="mp-x" vid="82"></div><div class="mp-x" vid="83"></div><div class="mp-o" vid="84"></div><div class="mp-o" vid="85"></div><div class="mp-o" vid="86"></div><div class="mp-o" vid="87"></div><div class="mp-o" vid="88"></div><div class="mp-o" vid="89"></div><div class="mp-o" vid="90"></div><div class="mp-o" vid="91"></div><div class="mp-o" vid="92"></div><div class="mp-o" vid="93"></div><div class="mp-o" vid="94"></div><div class="mp-o" vid="95"></div><div class="mp-o" vid="96"></div><div class="mp-o" vid="97"></div><div class="mp-o" vid="98"></div><div class="mp-o" vid="99"></div><div class="mp-o" vid="100"></div>
+                    <div class="mp-o" vid="101"></div><div class="mp-x" vid="102"></div><div class="mp-x" vid="103"></div><div class="mp-x" vid="104"></div><div class="mp-o" vid="105"></div><div class="mp-o" vid="106"></div><div class="mp-o" vid="107"></div><div class="mp-o" vid="108"></div><div class="mp-o" vid="109"></div><div class="mp-o" vid="110"></div><div class="mp-o" vid="111"></div><div class="mp-o" vid="112"></div><div class="mp-o" vid="113"></div><div class="mp-o" vid="114"></div><div class="mp-o" vid="115"></div><div class="mp-o" vid="116"></div><div class="mp-o" vid="117"></div><div class="mp-o" vid="118"></div><div class="mp-o" vid="119"></div><div class="mp-o" vid="120"></div>
+                    <div class="mp-o" vid="121"></div><div class="mp-o" vid="122"></div><div class="mp-x" vid="123"></div><div class="mp-x" vid="124"></div><div class="mp-o" vid="125"></div><div class="mp-o" vid="126"></div><div class="mp-o" vid="127"></div><div class="mp-o" vid="128"></div><div class="mp-o" vid="129"></div><div class="mp-o" vid="130"></div><div class="mp-o" vid="131"></div><div class="mp-o" vid="132"></div><div class="mp-o" vid="133"></div><div class="mp-o" vid="134"></div><div class="mp-o" vid="135"></div><div class="mp-o" vid="136"></div><div class="mp-o" vid="137"></div><div class="mp-o" vid="138"></div><div class="mp-o" vid="139"></div><div class="mp-o" vid="140"></div>
+                    <div class="mp-o" vid="141"></div><div class="mp-o" vid="142"></div><div class="mp-x" vid="143"></div><div class="mp-x" vid="144"></div><div class="mp-x" vid="145"></div><div class="mp-o" vid="146"></div><div class="mp-o" vid="147"></div><div class="mp-o" vid="148"></div><div class="mp-o" vid="149"></div><div class="mp-o" vid="150"></div><div class="mp-o" vid="151"></div><div class="mp-o" vid="152"></div><div class="mp-o" vid="153"></div><div class="mp-o" vid="154"></div><div class="mp-o" vid="155"></div><div class="mp-o" vid="156"></div><div class="mp-o" vid="157"></div><div class="mp-o" vid="158"></div><div class="mp-o" vid="159"></div><div class="mp-o" vid="160"></div>
+                    <div class="mp-o" vid="161"></div><div class="mp-o" vid="162"></div><div class="mp-o" vid="163"></div><div class="mp-x" vid="164"></div><div class="mp-x" vid="165"></div><div class="mp-o" vid="166"></div><div class="mp-o" vid="167"></div><div class="mp-o" vid="168"></div><div class="mp-o" vid="169"></div><div class="mp-o" vid="170"></div><div class="mp-o" vid="171"></div><div class="mp-o" vid="172"></div><div class="mp-o" vid="173"></div><div class="mp-o" vid="174"></div><div class="mp-o" vid="175"></div><div class="mp-o" vid="176"></div><div class="mp-o" vid="177"></div><div class="mp-o" vid="178"></div><div class="mp-o" vid="179"></div><div class="mp-o" vid="180"></div>
+                    <div class="mp-o" vid="181"></div><div class="mp-o" vid="182"></div><div class="mp-o" vid="183"></div><div class="mp-x" vid="184"></div><div class="mp-x" vid="185"></div><div class="mp-o" vid="186"></div><div class="mp-o" vid="187"></div><div class="mp-o" vid="188"></div><div class="mp-o" vid="189"></div><div class="mp-o" vid="190"></div><div class="mp-o" vid="191"></div><div class="mp-o" vid="192"></div><div class="mp-o" vid="193"></div><div class="mp-o" vid="194"></div><div class="mp-o" vid="195"></div><div class="mp-o" vid="196"></div><div class="mp-o" vid="197"></div><div class="mp-o" vid="198"></div><div class="mp-o" vid="199"></div><div class="mp-o" vid="200"></div>
+                    <div class="mp-o" vid="201"></div><div class="mp-o" vid="202"></div><div class="mp-o" vid="203"></div><div class="mp-x" vid="204"></div><div class="mp-p" vid="205"></div><div class="mp-x" vid="206"></div><div class="mp-x" vid="207"></div><div class="mp-x" vid="208"></div><div class="mp-x" vid="209"></div><div class="mp-x" vid="210"></div><div class="mp-o" vid="211"></div><div class="mp-o" vid="212"></div><div class="mp-o" vid="213"></div><div class="mp-o" vid="214"></div><div class="mp-o" vid="215"></div><div class="mp-o" vid="216"></div><div class="mp-o" vid="217"></div><div class="mp-o" vid="218"></div><div class="mp-o" vid="219"></div><div class="mp-o" vid="220"></div>
+                    <div class="mp-o" vid="221"></div><div class="mp-o" vid="222"></div><div class="mp-o" vid="223"></div><div class="mp-o" vid="224"></div><div class="mp-x" vid="225"></div><div class="mp-x" vid="226"></div><div class="mp-x" vid="227"></div><div class="mp-x" vid="228"></div><div class="mp-x" vid="229"></div><div class="mp-x" vid="230"></div><div class="mp-x" vid="231"></div><div class="mp-x" vid="232"></div><div class="mp-x" vid="233"></div><div class="mp-o" vid="234"></div><div class="mp-o" vid="235"></div><div class="mp-o" vid="236"></div><div class="mp-o" vid="237"></div><div class="mp-o" vid="238"></div><div class="mp-o" vid="239"></div><div class="mp-o" vid="240"></div>
+                    <div class="mp-o" vid="241"></div><div class="mp-o" vid="242"></div><div class="mp-o" vid="243"></div><div class="mp-o" vid="244"></div><div class="mp-o" vid="245"></div><div class="mp-o" vid="246"></div><div class="mp-o" vid="247"></div><div class="mp-x" vid="248"></div><div class="mp-x" vid="249"></div><div class="mp-x" vid="250"></div><div class="mp-x" vid="251"></div><div class="mp-x" vid="252"></div><div class="mp-x" vid="253"></div><div class="mp-x" vid="254"></div><div class="mp-o" vid="255"></div><div class="mp-o" vid="256"></div><div class="mp-o" vid="257"></div><div class="mp-o" vid="258"></div><div class="mp-o" vid="259"></div><div class="mp-o" vid="260"></div>
+                    <div class="mp-o" vid="261"></div><div class="mp-o" vid="262"></div><div class="mp-o" vid="263"></div><div class="mp-o" vid="264"></div><div class="mp-o" vid="265"></div><div class="mp-o" vid="266"></div><div class="mp-o" vid="267"></div><div class="mp-o" vid="268"></div><div class="mp-o" vid="269"></div><div class="mp-o" vid="270"></div><div class="mp-x" vid="271"></div><div class="mp-x" vid="272"></div><div class="mp-x" vid="273"></div><div class="mp-x" vid="274"></div><div class="mp-x" vid="275"></div><div class="mp-o" vid="276"></div><div class="mp-o" vid="277"></div><div class="mp-o" vid="278"></div><div class="mp-o" vid="279"></div><div class="mp-o" vid="280"></div>
+                    <div class="mp-o" vid="281"></div><div class="mp-o" vid="282"></div><div class="mp-o" vid="283"></div><div class="mp-o" vid="284"></div><div class="mp-o" vid="285"></div><div class="mp-o" vid="286"></div><div class="mp-o" vid="287"></div><div class="mp-o" vid="288"></div><div class="mp-o" vid="289"></div><div class="mp-o" vid="290"></div><div class="mp-o" vid="291"></div><div class="mp-o" vid="292"></div><div class="mp-o" vid="293"></div><div class="mp-o" vid="294"></div><div class="mp-o" vid="295"></div><div class="mp-o" vid="296"></div><div class="mp-o" vid="297"></div><div class="mp-o" vid="298"></div><div class="mp-o" vid="299"></div><div class="mp-o" vid="300"></div>
+                </div>
+                
+                <div style="margin-top: 20px;" vid="301">
+                    <p class="u-mono" style="font-size: 11px; margin-bottom: 5px;" vid="302">40.7128° N, 74.0060° W</p>
+                    <p style="font-size: 13px; line-height: 1.4;" vid="303">Coordinate Studio<br vid="304">Tribeca Sector<br vid="305">New York, NY 10013</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-card" style="max-width: 400px; margin-top: calc(var(--cell-size) * 2);" vid="306">
+            <h1 vid="307">Direct Uplink</h1>
+            <p class="u-mono" vid="308">SYSTEMS: online@coordinate.st</p>
+            <p class="u-mono" vid="309">PAGER: +1 212 555 0192</p>
+        </div>
+
+    </div>
+
+    <script vid="310">
+        const cellSize = 20;
+        const rulerX = document.getElementById('rulerX');
+        const rulerY = document.getElementById('rulerY');
+        const cursorBox = document.getElementById('cursorBox');
+        const coordDisplay = document.getElementById('coordDisplay');
+
+        function generateRulers() {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            
+            const cols = Math.ceil(width / cellSize);
+            rulerX.innerHTML = '';
+            for (let i = 0; i < cols; i++) {
+                const span = document.createElement('span');
+                span.textContent = getColumnLabel(i);
+                rulerX.appendChild(span);
+            }
+
+            const rows = Math.ceil(height / cellSize);
+            rulerY.innerHTML = '';
+            for (let i = 0; i < rows; i++) {
+                const span = document.createElement('span');
+                span.textContent = i + 1;
+                rulerY.appendChild(span);
+            }
+        }
+
+        function getColumnLabel(index) {
+            let label = '';
+            index++; 
+            while (index > 0) {
+                let rem = (index - 1) % 26;
+                label = String.fromCharCode(65 + rem) + label;
+                index = Math.floor((index - 1) / 26);
+            }
+            return label;
+        }
+
+        document.addEventListener('mousemove', (e) => {
+            const x = Math.floor((e.clientX - 30) / cellSize); 
+            const y = Math.floor((e.clientY - 20) / cellSize); 
+            const visualX = (x * cellSize) + 30;
+            const visualY = (y * cellSize) + 20;
+
+            if (e.clientX > 30 && e.clientY > 20) {
+                cursorBox.style.display = 'block';
+                cursorBox.style.transform = `translate(${visualX}px, ${visualY}px)`;
+                coordDisplay.textContent = `X: ${getColumnLabel(x)} | Y: ${y + 1}`;
+            } else {
+                cursorBox.style.display = 'none';
+            }
+        });
+
+        window.addEventListener('resize', generateRulers);
+        generateRulers();
+    </script>
+</body></html>

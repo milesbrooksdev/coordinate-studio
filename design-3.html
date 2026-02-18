@@ -1,0 +1,281 @@
+<html lang="en" vid="0"><head vid="1">
+    <meta charset="UTF-8" vid="2">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" vid="3">
+    <title vid="4">COORDINATE | ARCHITECTURAL SYSTEM</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" vid="5">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" vid="6">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@900&amp;family=JetBrains+Mono:wght@500;800&amp;display=swap" rel="stylesheet" vid="7">
+    <style vid="8">
+        :root {
+            --bg-color: #ffffff;
+            --ink-color: #000000;
+            --border-heavy: 4px solid #000000;
+            --border-thin: 1px solid #000000;
+            --font-bold-condensed: 'Inter', sans-serif; 
+            --font-mono: 'JetBrains Mono', monospace;
+            --space-unit: 10px;
+        }
+
+        * {
+            box-sizing: border-box;
+            cursor: crosshair;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            font-family: var(--font-mono);
+            color: var(--ink-color);
+            text-transform: uppercase;
+            letter-spacing: -0.02em;
+        }
+
+        
+        .viewport-frame {
+            position: fixed;
+            inset: 0;
+            border: var(--border-heavy);
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        
+        header {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            border-bottom: var(--border-heavy);
+        }
+
+        .brand-block {
+            padding: calc(var(--space-unit) * 2);
+            border-right: var(--border-heavy);
+        }
+
+        .logo-text {
+            font-family: var(--font-bold-condensed);
+            font-weight: 900;
+            font-size: 80px;
+            line-height: 0.8;
+            letter-spacing: -0.05em;
+            margin: 0;
+            transform: scaleY(1.2);
+            transform-origin: left;
+        }
+
+        
+        nav {
+            display: grid;
+            grid-template-rows: repeat(4, 1fr);
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 0 var(--space-unit);
+            text-decoration: none;
+            color: var(--ink-color);
+            font-weight: 800;
+            font-size: 14px;
+            border-bottom: var(--border-thin);
+            transition: background 0.1s;
+        }
+
+        .nav-item:last-child { border-bottom: none; }
+        .nav-item:hover { background: var(--ink-color); color: var(--bg-color); }
+
+        
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            min-height: calc(100vh - 120px);
+        }
+
+        .hero-section {
+            border-right: var(--border-heavy);
+            padding: calc(var(--space-unit) * 2);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .manifesto-text {
+            font-family: var(--font-bold-condensed);
+            font-weight: 900;
+            font-size: 64px;
+            line-height: 0.85;
+            margin: calc(var(--space-unit) * 2) 0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+            border-top: var(--border-heavy);
+        }
+
+        .stat-box {
+            padding: var(--space-unit);
+            border-right: var(--border-thin);
+        }
+
+        .stat-box:last-child { border-right: none; }
+
+        .label {
+            font-size: 10px;
+            font-weight: 800;
+            display: block;
+            margin-bottom: 5px;
+            background: #000;
+            color: #fff;
+            padding: 2px 4px;
+            width: fit-content;
+        }
+
+        
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .section-header {
+            background: var(--ink-color);
+            color: var(--bg-color);
+            padding: 5px var(--space-unit);
+            font-weight: 800;
+            font-size: 12px;
+        }
+
+        .project-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .project-table th {
+            text-align: left;
+            padding: 8px var(--space-unit);
+            font-size: 10px;
+            border-bottom: var(--border-heavy);
+        }
+
+        .project-table td {
+            padding: 8px var(--space-unit);
+            font-size: 13px;
+            border-bottom: var(--border-thin);
+            font-weight: 500;
+        }
+
+        .project-table tr:hover td {
+            background: #f0f0f0;
+        }
+
+        .methodology-block {
+            padding: var(--space-unit);
+            border-top: var(--border-heavy);
+            margin-top: auto;
+        }
+
+        .methodology-block p {
+            margin: 0;
+            font-size: 11px;
+            line-height: 1.2;
+            max-width: 100%;
+        }
+
+        
+        .footer-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 30px;
+            background: var(--ink-color);
+            color: var(--bg-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 calc(var(--space-unit) * 2);
+            font-size: 10px;
+            z-index: 1001;
+        }
+    </style>
+</head>
+<body vid="9">
+    <div class="viewport-frame" vid="10"></div>
+
+    <header vid="11">
+        <div class="brand-block" vid="12">
+            <h1 class="logo-text" vid="13">COORDINATE<br vid="14">STUDIO.</h1>
+            <div style="font-size: 10px; margin-top: 10px;" vid="15">PROTOCOL_V.1.0.4 // ARCHITECTURAL SYSTEMS</div>
+        </div>
+        <nav vid="16">
+            <a href="#" class="nav-item" vid="17">01 INDEX</a>
+            <a href="#" class="nav-item" vid="18">02 PROJECTS</a>
+            <a href="#" class="nav-item" vid="19">03 AGENCY</a>
+            <a href="#" class="nav-item" vid="20">04 CONTACT</a>
+        </nav>
+    </header>
+
+    <main class="main-layout" vid="21">
+        <section class="hero-section" vid="22">
+            <div vid="23">
+                <div class="label" vid="24">MISSION STATEMENT</div>
+                <h2 class="manifesto-text" vid="25">WE CONSTRUCT<br vid="26">DIGITAL<br vid="27">ENVIRONMENTS<br vid="28">WITH RIGOROUS<br vid="29">PRECISION.</h2>
+            </div>
+            
+            <div class="stats-grid" vid="30">
+                <div class="stat-box" vid="31">
+                    <span class="label" vid="32">LOCATION</span>
+                    <div vid="33">NYC_CORE_10013</div>
+                </div>
+                <div class="stat-box" vid="34">
+                    <span class="label" vid="35">AVAILABILITY</span>
+                    <div vid="36">OPEN_COMMISSIONS</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="sidebar" vid="37">
+            <div class="section-header" vid="38">SELECTED_ARCHITECTURE</div>
+            <table class="project-table" vid="39">
+                <thead vid="40">
+                    <tr vid="41">
+                        <th vid="42">CLIENT_UID</th>
+                        <th vid="43">PERIOD</th>
+                        <th vid="44">SECTOR_TYPE</th>
+                    </tr>
+                </thead>
+                <tbody vid="45">
+                    <tr vid="46"><td vid="47">APEX_FINANCIAL_TERM</td><td vid="48">2023</td><td vid="49">FINTECH</td></tr>
+                    <tr vid="50"><td vid="51">MONO_SPACE_GALLERY</td><td vid="52">2023</td><td vid="53">CULTURE</td></tr>
+                    <tr vid="54"><td vid="55">STRUCTURE_VOID_INST</td><td vid="56">2022</td><td vid="57">ARCH</td></tr>
+                    <tr vid="58"><td vid="59">GRID_SYSTEMS_INTL</td><td vid="60">2022</td><td vid="61">E-COM</td></tr>
+                    <tr vid="62"><td vid="63">NULL_PTR_EXCEPTION</td><td vid="64">2021</td><td vid="65">EXPERIMENTAL</td></tr>
+                    <tr vid="66"><td vid="67">CORE_STABILITY_LAB</td><td vid="68">2021</td><td vid="69">INFRA</td></tr>
+                    <tr vid="70"><td vid="71">BINARY_VOID_COLL</td><td vid="72">2020</td><td vid="73">RESEARCH</td></tr>
+                </tbody>
+            </table>
+
+            <div class="methodology-block" vid="74">
+                <span class="label" vid="75">METHODOLOGY</span>
+                <p vid="76">THE WEB IS A GRID, NOT A CANVAS. WE EXPOSE UNDERLYING LOGIC. NO DECORATION. ONLY STRUCTURE. UTILITY AS THE SUPREME ESTHETIC. RIGOR OVER ORNAMENTATION.</p>
+                <div style="margin-top: 10px; font-weight: 800; text-decoration: underline;" vid="77">EXECUTE_FULL_PROTOCOL_&gt;</div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer-bar" vid="78">
+        <div vid="79">SYSTEM_STATUS: NOMINAL</div>
+        <div id="coordDisplay" vid="80">LOC: 00.00 / 00.00</div>
+        <div vid="81">©2024 COORDINATE_STUDIO</div>
+    </footer>
+
+    <script vid="82">
+        document.addEventListener('mousemove', (e) => {
+            const x = ((e.clientX / window.innerWidth) * 100).toFixed(2);
+            const y = ((e.clientY / window.innerHeight) * 100).toFixed(2);
+            document.getElementById('coordDisplay').textContent = `LOC: ${x} / ${y}`;
+        });
+    </script>
+
+</body></html>
