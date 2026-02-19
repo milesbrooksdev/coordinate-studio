@@ -123,6 +123,7 @@
             height: calc(100% - 20px);
             z-index: 2;
             pointer-events: none; /* clicks pass through to document handler */
+            image-rendering: pixelated;
         }
 
         /* ─── Main content ────────────────────────────────────────── */
@@ -531,8 +532,9 @@
         const ctx    = canvas.getContext('2d');
 
         function resizeCanvas() {
-            canvas.width  = window.innerWidth  - OFFSET_X;
-            canvas.height = window.innerHeight - OFFSET_Y;
+            const rect = canvas.getBoundingClientRect();
+            canvas.width  = Math.round(rect.width);
+            canvas.height = Math.round(rect.height);
             render();
         }
 

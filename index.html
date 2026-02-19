@@ -144,6 +144,7 @@
             height: calc(100% - 20px);
             z-index: 2;
             pointer-events: none;
+            image-rendering: pixelated;
         }
 
         /* ─── Main content ────────────────────────────────────────── */
@@ -576,12 +577,9 @@
         const ctx    = canvas.getContext('2d');
 
         function resizeCanvas() {
-            const dpr  = window.devicePixelRatio || 1;
-            const cssW = window.innerWidth  - OFFSET_X;
-            const cssH = window.innerHeight - OFFSET_Y;
-            canvas.width  = Math.round(cssW * dpr);
-            canvas.height = Math.round(cssH * dpr);
-            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            const rect = canvas.getBoundingClientRect();
+            canvas.width  = Math.round(rect.width);
+            canvas.height = Math.round(rect.height);
             render();
         }
 
